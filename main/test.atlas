@@ -1,0 +1,10 @@
+images {
+  image: "/main/assets/dot8.png"
+}
+images {
+  image: "/main/assets/end.png"
+}
+images {
+  image: "/main/assets/start.png"
+}
+extrude_borders: 2
