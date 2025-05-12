@@ -1,0 +1,10 @@
+image: "/assets/kenney_minimap-pack/Tilemap/Style A/tilemap_packed.png"
+tile_width: 8
+tile_height: 8
+collision_groups: "default"
+animations {
+  id: "anim"
+  start_tile: 1
+  end_tile: 1
+}
+extrude_borders: 2

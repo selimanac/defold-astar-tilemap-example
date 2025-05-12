@@ -11,3 +11,4 @@ Thumbs.db
 builtins
 build_config.json
 .editor_settings
+.clang-format

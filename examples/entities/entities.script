@@ -1,0 +1,164 @@
+local utils        = require("examples.utils")
+
+local map          = {} -- <- For Astar
+local tile_map     = {} -- <- For tile lookup
+local entities     = {} -- <- For entities
+local path_ids     = {}
+local map_width    = 0
+local map_height   = 0
+local start_x      = 2  -- Path start tile X
+local start_y      = 2  -- Path start tile Y
+local end_x        = 13 -- Path end tile X
+local end_y        = 7  -- Path end tile Y
+local TILE_SIZE    = 8  -- Tile size
+local CAMERA       = "/camera#camera"
+local TOUCH        = hash("touch")
+local START_ID     = "/start"
+local END_ID       = "/end"
+local FACTORIES    = {
+	HEAD = "/factories#head",
+	DOT = "/factories#dot"
+}
+-- IDs of the entities from tile set/source
+local MAP_ENTITIES = {
+	19, -- Enemy
+	20 -- Exit
+}
+
+local function find_path()
+	local status, size, total_cost, path = astar.solve(start_x, start_y, end_x, end_y)
+
+	-- Delete path dots
+	for _, v in ipairs(path_ids) do
+		go.delete(v)
+	end
+
+	path_ids = {} -- Empty table
+
+	if status == astar.SOLVED then
+		-- Start position
+		go.set_position(utils.tile_to_screen(start_x, start_y, 0.2, TILE_SIZE), START_ID)
+
+		msg.post(END_ID, "disable") -- disable End gameobject
+
+		print("SOLVED")
+		print("Path Size", size)
+		print("Total Cost:", total_cost)
+
+		-- Check if last path node is entity
+		local is_entity = utils.contains(MAP_ENTITIES, path[size].id) and true or false
+
+		if is_entity then
+			local tile          = path[size]
+			local tile_position = utils.tile_to_screen(tile.x, tile.y, 0.2, TILE_SIZE)
+			local head_id       = factory.create(FACTORIES.HEAD, tile_position)
+			size                = size - 1
+			go.animate(head_id, "position.y", go.PLAYBACK_ONCE_FORWARD, tile_position.y + 15, go.EASING_INSINE, 0.5, 0, function(self, url)
+				go.delete(url)
+			end)
+		else
+			msg.post(END_ID, "enable") -- enable End gameobject
+			go.set_position(utils.tile_to_screen(end_x, end_y, 0.2, TILE_SIZE), END_ID)
+		end
+
+		-- Create dots for path
+		for i = 1, size do
+			local tile = path[i]
+			print("x:", tile.x, "y: ", tile.y, "tile ID: ", tile.id)
+
+			local tile_position = utils.tile_to_screen(tile.x, tile.y, 0.2, TILE_SIZE)
+			local id = factory.create(FACTORIES.DOT, tile_position)
+			table.insert(path_ids, id)
+		end
+	elseif status == astar.NO_SOLUTION then
+		print("NO_SOLUTION")
+	elseif status == astar.START_END_SAME then
+		print("START_END_SAME")
+	end
+end
+
+local function set_urls()
+	CAMERA   = msg.url(CAMERA)
+	START_ID = msg.url(START_ID)
+	END_ID   = msg.url(END_ID)
+	for k, v in pairs(FACTORIES) do
+		v = msg.url(v)
+	end
+end
+
+function init(_)
+	msg.post("@render:", "clear_color", { color = vmath.vector4(83, 80, 101, 255) / 255 })
+	msg.post(".", "acquire_input_focus")
+
+	set_urls()
+
+	-- Get map size
+	_, _, map_width, map_height = tilemap.get_bounds("/map#kenny")
+
+	-- Center camera
+	go.set_position(vmath.vector3((map_width * TILE_SIZE) / 2, (map_height * TILE_SIZE) / 2, 0), "/camera")
+
+	-- Setup map table
+	local tile_id = 0
+	for y = 1, map_height do
+		tile_map[y] = {}
+
+		for x = 1, map_width do
+			tile_id = tilemap.get_tile("/map#kenny", hash("map"), x, y)
+			tile_map[y][x] = tile_id
+			table.insert(map, tile_id)
+
+			if utils.contains(MAP_ENTITIES, tile_id) then
+				if not entities[y] then
+					entities[y] = {}
+				end
+				entities[y][x] = tile_id
+			end
+		end
+	end
+
+	-- Setup Astar
+	local direction        = astar.DIRECTION_EIGHT
+	local allocate         = map_width * map_height
+	local typical_adjacent = 8
+	local cache            = true -- Optional. Default is true
+	local use_zero         = false -- Optional. Default is false = 1 based
+	local flip_map         = false -- Optional. Default is false
+
+	astar.setup(map_width, map_height, direction, allocate, typical_adjacent, cache, use_zero, flip_map)
+	astar.set_map(map)
+
+	-- For astar.DIRECTION_EIGHT
+	-- Only tile  = 0 passable
+	local costs = {
+		[0] = {
+			1.0, -- E
+			1.0, -- N
+			1.0, -- W
+			1.0, -- S
+			1.41, -- NE
+			1.41, -- NW
+			1.41, -- SW
+			1.41 -- SE
+		}
+	}
+	astar.set_costs(costs)
+	astar.set_entities(MAP_ENTITIES)
+	astar.use_entities(true)
+
+	-- Find initial path
+	find_path()
+end
+
+function update(self, dt)
+	msg.post("@render:", "draw_debug_text", { text = "CLICK ON MAP", position = vmath.vector3(20, 30, 0), color = vmath.vector4(0, 0, 0, 1) })
+end
+
+function on_input(self, action_id, action)
+	local worldx, worldy = utils.screen_to_world(action.x, action.y, 0, CAMERA)
+	end_x, end_y = utils.screen_to_tile(worldx, worldy, TILE_SIZE)
+
+	if end_x > 0 and end_y > 0 and end_x < map_width and end_y < map_height and action_id == TOUCH and action.pressed then
+		find_path()
+	end
+end

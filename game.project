@@ -1,5 +1,5 @@
 [bootstrap]
-main_collection = /main/main.collectionc
+main_collection = /examples/entities/entities.collectionc
 
 [script]
 shared_state = 1
@@ -18,4 +18,8 @@ scale_mode = stretch
 [project]
 title = defold-astar-tilemap-example
 dependencies#0 = https://github.com/selimanac/defold-astar/archive/refs/heads/master.zip
+
+[graphics]
+default_texture_min_filter = nearest
+default_texture_mag_filter = nearest
 
