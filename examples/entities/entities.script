@@ -46,7 +46,7 @@ local function find_path()
 		print("Total Cost:", total_cost)
 
 		-- Check if last path node is entity
-		local is_entity = utils.contains(MAP_ENTITIES, path[size].id) and true or false
+		local is_entity = utils.contains(MAP_ENTITIES, path[size].id)
 
 		if is_entity then
 			local tile          = path[size]
