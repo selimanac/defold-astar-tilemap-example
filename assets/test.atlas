@@ -17,6 +17,6 @@ images {
   image: "/assets/kenney_minimap-pack/Tiles/Style A/tile_0023.png"
 }
 images {
-  image: "/assets/head.png"
+  image: "/assets/gfx/head.png"
 }
 extrude_borders: 2
