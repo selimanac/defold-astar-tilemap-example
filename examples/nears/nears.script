@@ -13,11 +13,12 @@ local start_y      = 2  -- Path start tile Y
 local end_x        = 13 -- Path end tile X
 local end_y        = 7  -- Path end tile Y
 
-local TILE_SIZE    = 8  -- Tile size
+local MAX_COST     = 3
+local TILE_SIZE    = 8 -- Tile size
 local CAMERA       = "/camera#camera"
 local TOUCH        = hash("touch")
 local START_ID     = "/start"
-local END_ID       = "/end"
+
 local FACTORIES    = {
 	HEAD = "/factories#head",
 	DOT = "/factories#dot"
@@ -31,7 +32,6 @@ local MAP_ENTITIES = {
 local function set_urls()
 	CAMERA   = msg.url(CAMERA)
 	START_ID = msg.url(START_ID)
-	END_ID   = msg.url(END_ID)
 
 	for _, v in pairs(FACTORIES) do
 		v = msg.url(v)
@@ -46,42 +46,37 @@ local function clear_dots()
 	path_ids = {} -- Empty table
 end
 
-local function find_path()
+local function find_nears()
 	-- Delete path dots
 	clear_dots()
 
-	local status, size, total_cost, path = astar.solve(start_x, start_y, end_x, end_y)
+	local status, size, nears = astar.solve_near(start_x, start_y, MAX_COST)
 
 	if status == astar.SOLVED then
 		-- Start position
 		go.set_position(utils.tile_to_screen(start_x, start_y, 0.2, TILE_SIZE), START_ID)
 
-		msg.post(END_ID, "disable") -- disable End gameobject
-
 		print("SOLVED")
 		print("Path Size", size)
-		print("Total Cost:", total_cost)
 
-		-- Check if last path node is entity
-		local is_entity = utils.contains(MAP_ENTITIES, path[size].id)
-
-		if is_entity then
-			local entity        = path[size]
-			local tile_position = utils.tile_to_screen(entity.x, entity.y, 0.2, TILE_SIZE)
-			local head_id       = factory.create(FACTORIES.HEAD, tile_position)
-			size                = size - 1
-
-			go.animate(head_id, "position.y", go.PLAYBACK_ONCE_FORWARD, tile_position.y + 15, go.EASING_INSINE, 0.5, 0, function(self, url)
-				go.delete(url)
-			end)
-		else
-			msg.post(END_ID, "enable") -- enable End gameobject
-			go.set_position(utils.tile_to_screen(end_x, end_y, 0.2, TILE_SIZE), END_ID)
-		end
-
-		-- Create dots for path
+		-- Create dots for nears
 		for i = 1, size do
-			local tile = path[i]
+			local tile = nears[i]
+
+			-- Check if nears contain entity
+			local is_entity = utils.contains(MAP_ENTITIES, tile.id)
+
+			if is_entity then
+				local entity        = nears[i]
+				local tile_position = utils.tile_to_screen(entity.x, entity.y, 0.2, TILE_SIZE)
+				local head_id       = factory.create(FACTORIES.HEAD, tile_position)
+				size                = size - 1
+
+				go.animate(head_id, "position.y", go.PLAYBACK_ONCE_FORWARD, tile_position.y + 15, go.EASING_INSINE, 0.5, 0, function(self, url)
+					go.delete(url)
+				end)
+			end
+
 			print("x:", tile.x, "y: ", tile.y, "tile ID: ", tile.id)
 
 			local tile_position = utils.tile_to_screen(tile.x, tile.y, 0.2, TILE_SIZE)
@@ -156,7 +151,7 @@ function init(_)
 	astar.use_entities(true)
 
 	-- Find initial path
-	find_path()
+	find_nears()
 end
 
 function update(self, dt)
@@ -165,9 +160,9 @@ end
 
 function on_input(self, action_id, action)
 	local worldx, worldy = utils.screen_to_world(action.x, action.y, 0, CAMERA)
-	end_x, end_y = utils.screen_to_tile(worldx, worldy, TILE_SIZE)
+	start_x, start_y = utils.screen_to_tile(worldx, worldy, TILE_SIZE)
 
 	if end_x > 0 and end_y > 0 and end_x < map_width and end_y < map_height and action_id == TOUCH and action.pressed then
-		find_path()
+		find_nears()
 	end
 end
