@@ -12,3 +12,5 @@ builtins
 build_config.json
 .editor_settings
 .clang-format
+/examples/basic-multimap_large
+/data

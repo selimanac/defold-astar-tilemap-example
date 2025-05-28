@@ -1,4 +1,5 @@
 local utils     = require("examples.utils")
+
 local TILE_SIZE = 32
 
 function init(self)
@@ -10,7 +11,7 @@ function init(self)
 	-- Set camera to center
 	go.set_position(vmath.vector3((map_width * TILE_SIZE) / 2, (map_height * TILE_SIZE) / 2, 0), "/camera")
 
-	-- Generate Map array
+	-- Generate Map array from tilemap
 	local tile = 0
 	local map = {}
 	for y = 1, map_height do
@@ -24,11 +25,11 @@ function init(self)
 	local direction        = astar.DIRECTION_EIGHT
 	local allocate         = map_width * map_height
 	local typical_adjacent = 8
-	local cache            = true -- Optional. Default is true
+	local use_cache        = true -- Optional. Default is true
 	local use_zero         = false -- Optional. Default is false = 1 based
 	local flip_map         = false -- Optional. Default is false
 
-	astar.setup(map_width, map_height, direction, allocate, typical_adjacent, cache, use_zero, flip_map)
+	astar.setup(map_width, map_height, direction, allocate, typical_adjacent, use_cache, use_zero, flip_map)
 	astar.set_map(map)
 
 	-- For astar.DIRECTION_EIGHT
@@ -57,7 +58,7 @@ function init(self)
 	local status, size, total_cost, path = astar.solve(start_x, start_y, end_x, end_y)
 
 	if status == astar.SOLVED then
-		-- Start and End points
+		-- Set start and end points
 		go.set_position(utils.tile_to_screen(start_x, start_y, 0.2, TILE_SIZE), "/start")
 		go.set_position(utils.tile_to_screen(end_x, end_y, 0.2, TILE_SIZE), "/end")
 

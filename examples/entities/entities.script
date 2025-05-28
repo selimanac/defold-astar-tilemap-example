@@ -1,15 +1,18 @@
 local utils        = require("examples.utils")
 
 local map          = {} -- <- For Astar
-local tile_map     = {} -- <- For tile lookup
+local tile_map     = {} -- <- For tile lookup. We're not using it, but you might want to.
 local entities     = {} -- <- For entities
 local path_ids     = {}
+
 local map_width    = 0
 local map_height   = 0
+
 local start_x      = 2  -- Path start tile X
 local start_y      = 2  -- Path start tile Y
 local end_x        = 13 -- Path end tile X
 local end_y        = 7  -- Path end tile Y
+
 local TILE_SIZE    = 8  -- Tile size
 local CAMERA       = "/camera#camera"
 local TOUCH        = hash("touch")
@@ -25,12 +28,22 @@ local MAP_ENTITIES = {
 	20 -- Exit
 }
 
+local function set_urls()
+	CAMERA   = msg.url(CAMERA)
+	START_ID = msg.url(START_ID)
+	END_ID   = msg.url(END_ID)
+
+	for _, v in pairs(FACTORIES) do
+		v = msg.url(v)
+	end
+end
+
 local function find_path()
 	local status, size, total_cost, path = astar.solve(start_x, start_y, end_x, end_y)
 
 	-- Delete path dots
-	for _, v in ipairs(path_ids) do
-		go.delete(v)
+	for _, dot in ipairs(path_ids) do
+		go.delete(dot)
 	end
 
 	path_ids = {} -- Empty table
@@ -77,15 +90,6 @@ local function find_path()
 	end
 end
 
-local function set_urls()
-	CAMERA   = msg.url(CAMERA)
-	START_ID = msg.url(START_ID)
-	END_ID   = msg.url(END_ID)
-	for k, v in pairs(FACTORIES) do
-		v = msg.url(v)
-	end
-end
-
 function init(_)
 	msg.post("@render:", "clear_color", { color = vmath.vector4(83, 80, 101, 255) / 255 })
 	msg.post(".", "acquire_input_focus")
@@ -101,11 +105,11 @@ function init(_)
 	-- Setup map table
 	local tile_id = 0
 	for y = 1, map_height do
-		tile_map[y] = {}
+		tile_map[y] = {} -- <- For tile lookup. We're not using it, but you might want to.
 
 		for x = 1, map_width do
 			tile_id = tilemap.get_tile("/map#kenny", hash("map"), x, y)
-			tile_map[y][x] = tile_id
+			tile_map[y][x] = tile_id -- <- For tile lookup. We're not using it, but you might want to.
 			table.insert(map, tile_id)
 
 			if utils.contains(MAP_ENTITIES, tile_id) then

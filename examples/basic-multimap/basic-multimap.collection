@@ -1,0 +1,59 @@
+name: "main"
+scale_along_z: 0
+embedded_instances {
+  id: "test_tilemap"
+  data: "components {\n"
+  "  id: \"test1\"\n"
+  "  component: \"/examples/basic-multimap/test1.tilemap\"\n"
+  "}\n"
+  "components {\n"
+  "  id: \"test2\"\n"
+  "  component: \"/examples/basic-multimap/test2.tilemap\"\n"
+  "  position {\n"
+  "    y: 300.0\n"
+  "  }\n"
+  "}\n"
+  "components {\n"
+  "  id: \"test3\"\n"
+  "  component: \"/examples/basic-multimap/test3.tilemap\"\n"
+  "  position {\n"
+  "    x: 500.0\n"
+  "  }\n"
+  "}\n"
+  "components {\n"
+  "  id: \"test4\"\n"
+  "  component: \"/examples/basic-multimap/test4.tilemap\"\n"
+  "  position {\n"
+  "    x: 500.0\n"
+  "    y: 300.0\n"
+  "  }\n"
+  "}\n"
+  ""
+}
+embedded_instances {
+  id: "camera"
+  data: "embedded_components {\n"
+  "  id: \"camera\"\n"
+  "  type: \"camera\"\n"
+  "  data: \"aspect_ratio: 1.0\\n"
+  "fov: 0.7854\\n"
+  "near_z: -1.0\\n"
+  "far_z: 1.0\\n"
+  "auto_aspect_ratio: 1\\n"
+  "orthographic_projection: 1\\n"
+  "\"\n"
+  "}\n"
+  ""
+  position {
+    x: 490.0
+    y: 290.0
+  }
+}
+embedded_instances {
+  id: "script"
+  data: "components {\n"
+  "  id: \"test1\"\n"
+  "  component: \"/examples/basic-multimap/basic-multimap.script\"\n"
+  "}\n"
+  ""
+}

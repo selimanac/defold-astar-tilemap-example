@@ -1,0 +1,104 @@
+local utils       = require("examples.utils")
+
+local TILE_SIZE   = 32
+local map_width   = 0
+local map_height  = 0
+
+local start_x     = 2
+local start_y     = 2
+local end_x       = 14
+local end_y       = 2
+
+local status      = 0
+local path        = {}
+local debug_color = vmath.vector4(1, 1, 1, 1)
+
+local maps        = {
+	{
+		offset = { x = 0, y = 0 },
+		id = "/test_tilemap#test1",
+		map = {}
+	},
+	{
+		offset = { x = 0, y = 300.0 },
+		id = "/test_tilemap#test2",
+		map = {}
+	},
+	{
+		offset = { x = 500.0, y = 0.0 },
+		id = "/test_tilemap#test3",
+		map = {}
+	},
+	{
+		offset = { x = 500.0, y = 300.0 },
+		id = "/test_tilemap#test4",
+		map = {}
+	}
+}
+
+function init(_)
+	msg.post("@render:", "use_camera_projection")
+
+	local tile             = 0
+	local direction        = astar.DIRECTION_EIGHT
+	local allocate         = 0
+	local typical_adjacent = 8
+	local use_cache        = true -- Optional. Default is true
+	local use_zero         = false -- Optional. Default is false = 1 based
+	local flip_map         = false -- Optional. Default is false
+	local costs            = {
+		[1] = {
+			1.0, -- E
+			1.0, -- N
+			1.0, -- W
+			1.0, -- S
+			1.41, -- NE
+			1.41, -- NW
+			1.41, -- SW
+			1.41 -- SE
+		}
+	}
+
+	for _, map in ipairs(maps) do
+		_, _, map_width, map_height = tilemap.get_bounds(map.id)
+		for y = 1, map_height do
+			for x = 1, map_width do
+				tile = tilemap.get_tile(map.id, hash("layer1"), x, y)
+				table.insert(map.map, tile)
+			end
+		end
+
+		-- Setup Astar per map
+		allocate = map_width * map_height
+		map.map_id = astar.new_map_id()
+		astar.setup(map_width, map_height, direction, allocate, typical_adjacent, use_cache, use_zero, flip_map, map.map_id)
+		astar.set_map(map.map, map.map_id)
+		astar.set_costs(costs, map.map_id)
+	end
+end
+
+function update(self, dt)
+	for _, map in ipairs(maps) do
+		start_x = rnd.range(1, map_width)
+		start_y = rnd.range(1, map_height)
+		end_x = rnd.range(1, map_width)
+		end_y = rnd.range(1, map_height)
+
+		status, _, _, path = astar.solve(start_x, start_y, end_x, end_y, map.map_id)
+
+		if status == astar.SOLVED then
+			for i = 1, #path - 1 do
+				local tile_a = path[i]
+				local tile_b = path[i + 1]
+				local line_start = utils.tile_to_screen(tile_a.x, tile_a.y, 0.1, TILE_SIZE, map.offset.x, map.offset.y)
+				local line_end = utils.tile_to_screen(tile_b.x, tile_b.y, 0.1, TILE_SIZE, map.offset.x, map.offset.y)
+
+				msg.post("@render:", "draw_line", { start_point = line_start, end_point = line_end, color = debug_color })
+			end
+		elseif status == astar.NO_SOLUTION then
+			print("NO_SOLUTION")
+		elseif status == astar.START_END_SAME then
+			print("START_END_SAME")
+		end
+	end
+end

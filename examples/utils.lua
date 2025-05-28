@@ -30,9 +30,11 @@ function utils.screen_to_world(x, y, z, camera_id)
 	return x1, y1, z1
 end
 
-function utils.tile_to_screen(tile_x, tile_y, z, tile_size)
-	local scrx = tile_size * (tile_x - 1) + tile_size / 2
-	local scry = tile_size * (tile_y - 1) + tile_size / 2
+function utils.tile_to_screen(tile_x, tile_y, z, tile_size, offset_x, offset_y)
+	offset_x = offset_x or 0
+	offset_y = offset_y or 0
+	local scrx = tile_size * (tile_x - 1) + tile_size / 2 + offset_x
+	local scry = tile_size * (tile_y - 1) + tile_size / 2 + offset_y
 	return vmath.vector3(scrx, scry, z)
 end
 
