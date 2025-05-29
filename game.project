@@ -1,5 +1,5 @@
 [bootstrap]
-main_collection = /examples/basic-multimap/basic-multimap.collectionc
+main_collection = /examples/basic/basic.collectionc
 
 [script]
 shared_state = 1
