@@ -17,7 +17,6 @@ scale_mode = stretch
 
 [project]
 title = defold-astar-tilemap-example
-custom_resources = data
 dependencies#0 = https://github.com/selimanac/defold-random/archive/refs/heads/master.zip
 dependencies#1 = https://github.com/selimanac/defold-astar/archive/refs/heads/master.zip
 
